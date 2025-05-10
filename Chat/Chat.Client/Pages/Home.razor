@@ -1,0 +1,85 @@
+﻿@page "/"
+
+@inject NavigationManager Navigation
+
+<PageTitle>Chat App</PageTitle>
+
+
+@if (string.IsNullOrWhiteSpace(UserName))
+{
+    <UserInfoComponent OnUserInfoSubmitted="HandleUserInfoSubmitted" />
+}
+else
+{
+    @if (SystemMessages is not null && SystemMessages.Count > 0)
+    {
+        <ul>
+            @foreach (var message in SystemMessages)
+            {
+                <li>@message</li>
+            }
+        </ul>
+    }
+}
+
+
+
+
+
+
+
+@code
+{
+    List<string> SystemMessages = new List<string>();
+
+    string UserName = string.Empty;
+    string UserId = string.Empty;
+
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     var hubConnection = new HubConnectionBuilder()
+    //         //.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+    //         .WithUrl($"https://localhost:7188/chathub")
+    //         .Build();
+
+    //     hubConnection.On<string>("ReceiveSystemMessage", ReceiveSystemMessage);
+
+    //     await hubConnection.StartAsync();
+    // }
+
+    async Task ConnectToServer(string userId, string userName)
+    {
+        var hubConnection = new HubConnectionBuilder()
+            //.WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+            .WithUrl($"https://localhost:7188/chathub?userid={userId}&username={userName}")
+            .Build();
+
+        hubConnection.On<string>("ReceiveSystemMessage", ReceiveSystemMessage);
+
+        await hubConnection.StartAsync();
+    }
+
+
+
+
+    void ReceiveSystemMessage(string message)
+    {
+        Console.WriteLine(message);
+
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            SystemMessages.Add(message);
+            StateHasChanged();
+        }
+    }
+
+    async Task HandleUserInfoSubmitted(string userName)
+    {
+        UserId = Guid.NewGuid().ToString();
+        UserName = userName;
+
+        await ConnectToServer(UserId, UserName);
+        // StateHasChanged();
+    }
+}

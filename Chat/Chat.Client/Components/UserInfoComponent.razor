@@ -1,0 +1,43 @@
+﻿<h3>Enter Your Info</h3>
+
+@if (userInfo is not null)
+{
+    <EditForm Model="userInfo" OnValidSubmit="SaveUserInfo">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        
+        <div class="form-group">
+            <label for="userName">User Name</label>
+            <InputText id="userName" @bind-Value="userInfo.UserName" class="form-control" />
+            <ValidationMessage For="@(() => userInfo.UserName)" />
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+    </EditForm>
+}
+
+
+
+
+@code {
+    [Parameter] public EventCallback<string> OnUserInfoSubmitted { get; set; } = default!;
+
+    UserInfo userInfo = new UserInfo();
+    
+
+    async Task SaveUserInfo()
+    {
+        await OnUserInfoSubmitted.InvokeAsync(userInfo.UserName);
+        
+        // Here you can handle the user info, e.g., send it to a server or store it locally
+        // Console.WriteLine($"User Name: {userInfo.UserName}");
+    }
+
+
+
+
+    class UserInfo
+    {
+        public string? UserName { get; set; } = string.Empty;
+    }
+}
