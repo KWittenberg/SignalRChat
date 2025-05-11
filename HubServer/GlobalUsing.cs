@@ -1,1 +1,2 @@
-﻿global using Microsoft.AspNetCore.SignalR;
+﻿global using ChatContracts;
+global using Microsoft.AspNetCore.SignalR;

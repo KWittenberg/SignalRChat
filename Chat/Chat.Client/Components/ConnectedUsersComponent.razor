@@ -1,0 +1,34 @@
+﻿@if (ConnectedUsers is not null && ConnectedUsers.Count > 0)
+{
+    foreach (var user in ConnectedUsers)
+    {
+        @if (user.UserId != LogonUserId)
+        {
+            <tr style="cursor: pointer; height: 30px" @key="user.ConnectionId" @onclick="async () => await SelectUser(user.ConnectionId!)" class="table-primary">
+                <td>@user.UserName</td>
+                <td></td>
+            </tr>
+        }
+    }
+}
+else
+{
+    <li>No users connected</li>
+}
+
+
+@code {
+    [Parameter] public List<ConnectedUser>? ConnectedUsers { get; set; } = new List<ConnectedUser>();
+
+    [Parameter] public string? LogonUserId { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<ConnectedUser> OnUserSelected { get; set; }
+
+
+
+    async Task SelectUser(string connectionId)
+    {
+        var targetUser = ConnectedUsers?.FirstOrDefault(u => u.ConnectionId == connectionId);
+        if (targetUser is not null) await OnUserSelected.InvokeAsync(targetUser);
+    }
+}
