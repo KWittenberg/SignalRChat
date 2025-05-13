@@ -4,9 +4,16 @@
     {
         @if (user.UserId != LogonUserId)
         {
+            var unreadMessages = user.Messages.Count(m => m.Unread == true && m.FromUserId != LogonUserId);
+            
             <tr style="cursor: pointer; height: 30px" @key="user.ConnectionId" @onclick="async () => await SelectUser(user.ConnectionId!)" class="table-primary">
                 <td>@user.UserName</td>
-                <td></td>
+                <td>
+                    @if (unreadMessages > 0)
+                    {
+                        <span class="badge bg-danger">@unreadMessages</span>
+                    }
+                </td>
             </tr>
         }
     }
@@ -29,6 +36,16 @@ else
     async Task SelectUser(string connectionId)
     {
         var targetUser = ConnectedUsers?.FirstOrDefault(u => u.ConnectionId == connectionId);
-        if (targetUser is not null) await OnUserSelected.InvokeAsync(targetUser);
+        if (targetUser is not null)
+        {
+            targetUser.Messages.ForEach(m => m.Unread = false);
+            await OnUserSelected.InvokeAsync(targetUser);
+        }
+    }
+
+    public void ClearUnreadMessageCount(string userId)
+    {
+        ConnectedUsers?.FirstOrDefault(u => u.UserId == userId)?.Messages.ForEach(m => m.Unread = false);
+        StateHasChanged();
     }
 }

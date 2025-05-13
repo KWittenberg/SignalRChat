@@ -1,5 +1,7 @@
 ﻿@page "/"
 
+@* @inject JSRuntime JsRuntime *@
+
 <PageTitle>Chat App</PageTitle>
 
 
@@ -10,14 +12,21 @@
 else
 {
     <div class="row">
-        <div class="col-4">
-            <h3>Connected Users</h3>
+        <div class="col-3">
+            <p>Connected Users:</p>
             <table style="width: 100%">
-                <ConnectedUsersComponent ConnectedUsers="@ConnectedUsers" LogonUserId="@UserId" OnUserSelected="@OnUserSelected" />
+                <ConnectedUsersComponent @ref="@ConnectedUsersComponent"
+                                         ConnectedUsers="@ConnectedUsers"
+                                         LogonUserId="@UserId"
+                                         OnUserSelected="@OnUserSelected" />
             </table>
         </div>
-        <div class="col-8">
-            <ChatComponent FromUserId="@UserId" ConnectedUsers="@ConnectedUsers" ToUser="@TargetUser" HubConnection="@HubConnection" />
+        <div class="col-9">
+            <ChatComponent FromUserId="@UserId"
+                           ConnectedUsers="@ConnectedUsers"
+                           ToUser="@TargetUser"
+                           HubConnection="@HubConnection"
+                           OnMessageSend="@OnMessageSend" />
 
             @if (SystemMessages is not null && SystemMessages.Count > 0)
             {
@@ -40,6 +49,8 @@ else
     List<string> SystemMessages = new List<string>();
 
     List<ConnectedUser> ConnectedUsers = new List<ConnectedUser>();
+
+    ConnectedUsersComponent? ConnectedUsersComponent;
 
     ConnectedUser? TargetUser;
 
@@ -75,7 +86,7 @@ else
         await HubConnection.StartAsync();
     }
 
-    void ReceiveMessage(string fromUserId, string fromConnectionId, string message)
+    async Task ReceiveMessage(string fromUserId, string fromConnectionId, string message)
     {
         if (string.IsNullOrWhiteSpace(fromConnectionId)) return;
 
@@ -89,6 +100,8 @@ else
                 Message = message
             });
 
+        // await JsRuntime.InvokeVoidAsync("console.log", "TEST");
+        // await JsRuntime.InvokeVoidAsync("playSound", "sounds/notifications.wav");
         StateHasChanged();
     }
 
@@ -107,7 +120,20 @@ else
     {
         if (users is not null && users.Count > 0)
         {
-            ConnectedUsers = users;
+            var existingUsersDictionary = ConnectedUsers.ToDictionary(u => u.ConnectionId ?? string.Empty);
+
+            // Add new users
+            foreach (var user in users)
+            {
+                if (!existingUsersDictionary.ContainsKey(user.ConnectionId ?? string.Empty))
+                {
+                    ConnectedUsers.Add(user);
+                }
+            }
+
+            // Remove disconnected users
+            ConnectedUsers = ConnectedUsers.Where(u => users.Any(newUser => newUser.ConnectionId == u.ConnectionId)).ToList();
+            
             StateHasChanged();
         }
     }
@@ -124,5 +150,10 @@ else
     void OnUserSelected(ConnectedUser toUser)
     {
         TargetUser = toUser;
+    }
+
+    void OnMessageSend(string toUserId)
+    {
+        ConnectedUsersComponent?.ClearUnreadMessageCount(toUserId);
     }
 }

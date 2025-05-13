@@ -1,0 +1,10 @@
+﻿.message-item {
+    margin: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.img-avatar {
+    width: 2rem;
+}
